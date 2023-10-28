@@ -30,7 +30,7 @@ ARCH_NAMES = archs.__all__
 LOSS_NAMES = losses.__all__
 LOSS_NAMES.append('BCEWithLogitsLoss')
 
-device_ids = [0, 1, 2, 3] # 可用GPU
+device_ids = [0, 1, 2, 3] 
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -42,12 +42,12 @@ def parse_args():
                         metavar='N', help='mini-batch size (default: 16)')
 
     # model
-    parser.add_argument('--arch', '-a', metavar='ARCH', default='MCNMF_Unet',  # 默认unet++，网络在archs.py文件里
+    parser.add_argument('--arch', '-a', metavar='ARCH', default='MCNMF_Unet',  
                         choices=ARCH_NAMES,
                         help='model architecture: ' +
                              ' | '.join(ARCH_NAMES) +
                              ' (default: NestedUNet)')
-    parser.add_argument('--deep_supervision', default=False, type=str2bool)  # true输出output1-4，false输出output
+    parser.add_argument('--deep_supervision', default=False, type=str2bool)  
     parser.add_argument('--input_channels', default=3, type=int,
                         help='input channels')
     parser.add_argument('--num_classes', default=1, type=int,
