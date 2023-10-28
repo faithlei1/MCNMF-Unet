@@ -10,9 +10,6 @@ medpy
 SimpleITK
 scipy
 h5py
-tensorflow-gpu==2.8.0
-keras==2.8.0
-h5py
 opencv-python
 pandas
 yaml
