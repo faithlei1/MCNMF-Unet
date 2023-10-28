@@ -38,7 +38,7 @@ def parse_args():
                         help='model name: (default: arch+timestamp)')
     parser.add_argument('--epochs', default=100, type=int, metavar='N',
                         help='number of total epochs to run')
-    parser.add_argument('-b', '--batch_size', default=1, type=int,
+    parser.add_argument('-b', '--batch_size', default=8, type=int,
                         metavar='N', help='mini-batch size (default: 16)')
 
     # model
@@ -58,14 +58,14 @@ def parse_args():
                         help='image height')
 
     # loss
-    parser.add_argument('--loss', default='BCEDiceLoss',  # 损失函数 ，在文件losses.py里
+    parser.add_argument('--loss', default='BCEDiceLoss',
                         choices=LOSS_NAMES,
                         help='loss: ' +
                              ' | '.join(LOSS_NAMES) +
                              ' (default: BCEDiceLoss)')
 
     # dataset
-    parser.add_argument('--dataset', default='BUSI',  # 数据集
+    parser.add_argument('--dataset', default='BUSI',
                         help='dataset name')
     parser.add_argument('--img_ext', default='.png',
                         help='image file extension')
@@ -73,12 +73,12 @@ def parse_args():
                         help='mask file extension')
 
     # optimizer
-    parser.add_argument('--optimizer', default='SGD',  # 优化器 随机梯度下降法（SGD）
+    parser.add_argument('--optimizer', default='SGD',
                         choices=['Adam', 'SGD'],
                         help='loss: ' +
                              ' | '.join(['Adam', 'SGD']) +
                              ' (default: Adam)')
-    parser.add_argument('--lr', '--learning_rate', default=1e-3, type=float,  # 学习率
+    parser.add_argument('--lr', '--learning_rate', default=1e-3, type=float,
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float,
                         help='momentum')
@@ -223,14 +223,11 @@ def main():
 
     # create model
     print("=> creating model %s" % config['arch'])
-    # model = Net_WAUnet.__dict__[config['arch']](config['num_classes'],  # 调用UNet++
-    #                                        config['input_channels'],
-    #                                        config['deep_supervision'])
-    model = MCNMFUnet.__dict__[config['arch']](config['num_classes'],  # 调用UNet++
+    model = MCNMFUnet.__dict__[config['arch']](config['num_classes'],
                                           config['input_channels'])
-    # model = NetResUnet.__dict__[config['arch']](config['input_channels'])
-    # 多卡
-    # model = torch.nn.DataParallel(model, device_ids=device_ids)  # 指定要用到的设备
+
+
+    # model = torch.nn.DataParallel(model, device_ids=device_ids)
     model = model.cuda()
 
     params = filter(lambda p: p.requires_grad, model.parameters())
@@ -258,28 +255,24 @@ def main():
         raise NotImplementedError
 
     # Data loading code
-    img_ids = glob(os.path.join('inputs', config['dataset'], 'images', '*' + config['img_ext']))  # 数据集地址
+    img_ids = glob(os.path.join('inputs', config['dataset'], 'images', '*' + config['img_ext']))
     img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
 
-    train_img_ids, val_img_ids = train_test_split(img_ids, test_size=0.3, random_state=42)  # test_size：样本占比，测试集占数据集的比重，
-
-    # 数据增强（增广）
+    train_img_ids, val_test_img_ids = train_test_split(img_ids, test_size=0.3, random_state=42)
+    val_img_ids, test_img_ids = train_test_split(val_test_img_ids, test_size=0.33, random_state=42)
     train_transform = Compose([
-        # transforms.RandomRotate90(),
-        albu.RandomRotate90(),  # 随机旋转
-        transforms.Flip(),  # 随机翻转
+        albu.RandomRotate90(),
+        transforms.Flip(),
         OneOf([
-            transforms.HueSaturationValue(),  # 色调
-            transforms.RandomBrightness(),  # 随机亮度
-            transforms.RandomContrast(),  # 随机裁剪
-        ], p=1),  # 以上三个随机选择一个
-        # transforms.Resize(config['input_h'], config['input_w']),
-        albu.Resize(config['input_h'], config['input_w']),  # 图片尺寸96×96
-        transforms.Normalize(),  # 归一化
+            transforms.HueSaturationValue(),
+            transforms.RandomBrightness(),  #
+            transforms.RandomContrast(),  #
+        ], p=1),
+        albu.Resize(config['input_h'], config['input_w']),  #
+        transforms.Normalize(),
     ])
 
     val_transform = Compose([
-        # transforms.Resize(config['input_h'], config['input_w']),
         albu.Resize(config['input_h'], config['input_w']),
         transforms.Normalize(),
     ])
